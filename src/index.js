@@ -1,10 +1,20 @@
 import cors from 'cors';
 import 'dotenv/config';
 import express from 'express';
+import { v4 as uuidv4 } from 'uuid';
+
 
 const app = express();
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }))
+
 app.use(cors());
+
+app.use((req, res, next) => {
+  req.me = users[1];
+   next()
+})
 
 let users = {
   1: {
@@ -72,8 +82,25 @@ app.get('/users', (req, res) => {
   return res.send('GET HTTP method on user resource');
 })
 
+app.get('/session', (req, res) => {
+  return res.send(users[req.me.id]);
+})
+
 app.post('/users', (req, res) => {
   return res.send('POST HTTP method on user resource');
+})
+
+app.post('/messages', (req, res) => {
+  const id = uuidv4();
+  const message = {
+    id,
+    text: req.body.text,
+    userId: req.me.id,
+  }
+
+  messages[id] = message;
+  
+  return res.send(message);
 })
 
 app.put('/users/:userId', (req, res) => {
@@ -94,6 +121,16 @@ app.put('/users', (req, res) => {
 
 app.delete('/users', (req, res) => {
   return res.send('DELETE HTTP method on user resource');
+})
+
+app.delete('/messages/:messageId', (req, res) => {
+  const {
+    [req.params.messageId]: message,
+    ...otherMessages
+  } = messages;
+
+  messages = otherMessages
+  return res.send(message);
 })
 
 app.listen(3000, () => 
